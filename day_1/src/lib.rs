@@ -12,16 +12,14 @@ fn open_input() -> std::io::Result<String> {
 }
 
 fn parse(text: &String) -> Vec<usize> {
-    text.split("\n\n").map(|calories_text| {
-        calories_text
-            .split_whitespace()
-            .map(|calorie| {
-                calorie
-                    .parse::<usize>()
-                    .unwrap_or(0)
-            })
-            .sum::<usize>()
-    }).collect::<Vec<usize>>()
+    text.split("\n\n")
+        .map(|calories_text| {
+            calories_text
+                .split_whitespace()
+                .map(|calorie| calorie.parse::<usize>().unwrap_or(0))
+                .sum::<usize>()
+        })
+        .collect::<Vec<usize>>()
 }
 
 fn get_total_calories_of_elves() -> Vec<usize> {
