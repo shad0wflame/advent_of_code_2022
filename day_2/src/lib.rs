@@ -1,16 +1,26 @@
+extern crate core;
+
 use std::fs::read_to_string;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub enum Hand {
     ROCK = 1,
     PAPER = 2,
     SCISSORS = 3,
 }
 
+#[derive(Debug)]
 pub enum Result {
     LOSE = 0,
     DRAW = 3,
     WIN = 6,
+}
+
+#[derive(Debug)]
+pub enum Round {
+    HAND(Hand),
+    RESULT(Result),
 }
 
 impl Hand {
@@ -29,6 +39,22 @@ impl Hand {
     }
 }
 
+impl Result {
+    fn deduce_other_hand(&self, hand: &Hand) -> Hand {
+        match (self, hand) {
+            (Result::WIN, Hand::ROCK) => Hand::PAPER,
+            (Result::WIN, Hand::PAPER) => Hand::SCISSORS,
+            (Result::WIN, Hand::SCISSORS) => Hand::ROCK,
+            (Result::DRAW, Hand::ROCK) => Hand::ROCK,
+            (Result::DRAW, Hand::PAPER) => Hand::PAPER,
+            (Result::DRAW, Hand::SCISSORS) => Hand::SCISSORS,
+            (Result::LOSE, Hand::ROCK) => Hand::SCISSORS,
+            (Result::LOSE, Hand::PAPER) => Hand::ROCK,
+            (Result::LOSE, Hand::SCISSORS) => Hand::PAPER,
+        }
+    }
+}
+
 fn open_input() -> std::io::Result<String> {
     let current_dir = std::env::current_dir()?;
 
@@ -39,11 +65,23 @@ fn open_input() -> std::io::Result<String> {
     )))
 }
 
-fn parse(hand: &str) -> Option<Hand> {
+fn wrong_parse(hand: &str) -> Option<Hand> {
     match hand {
         "A" | "X" => Some(Hand::ROCK),
         "B" | "Y" => Some(Hand::PAPER),
         "C" | "Z" => Some(Hand::SCISSORS),
+        _ => None,
+    }
+}
+
+fn right_parse(text: &str) -> Option<Round> {
+    match text {
+        "A" => Some(Round::HAND(Hand::ROCK)),
+        "B" => Some(Round::HAND(Hand::PAPER)),
+        "C" => Some(Round::HAND(Hand::SCISSORS)),
+        "X" => Some(Round::RESULT(Result::LOSE)),
+        "Y" => Some(Round::RESULT(Result::DRAW)),
+        "Z" => Some(Round::RESULT(Result::WIN)),
         _ => None,
     }
 }
@@ -58,7 +96,7 @@ pub fn first_solution() -> u32 {
             // Convert text to Hand
             round
                 .split_whitespace()
-                .map(parse)
+                .map(wrong_parse)
                 .collect::<Vec<Option<Hand>>>()
         })
         .map(|round| {
@@ -67,6 +105,39 @@ pub fn first_solution() -> u32 {
                 .as_ref()
                 .unwrap()
                 .fight(&round[0].as_ref().unwrap())
+        })
+        .sum()
+}
+
+pub fn second_solution() -> u32 {
+    let rounds = open_input().expect("Unable to open input file.");
+
+    // Get the sum of all results
+    rounds
+        .lines()
+        .map(|round| {
+            // Convert text to Round
+            round
+                .split_whitespace()
+                .map(right_parse)
+                .collect::<Vec<Option<Round>>>()
+        })
+        .map(|round| {
+            let enemy_hand = if let Round::HAND(enemy_hand) = round[0].as_ref().unwrap() {
+                enemy_hand
+            } else {
+                panic!()
+            };
+
+            let result= if let Round::RESULT(result) = round[1].as_ref().unwrap() {
+                result
+            } else {
+                panic!()
+            };
+
+            let own_hand: Hand = result.deduce_other_hand(enemy_hand);
+
+            own_hand.fight(enemy_hand)
         })
         .sum()
 }

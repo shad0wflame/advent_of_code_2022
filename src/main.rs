@@ -9,6 +9,6 @@ fn main() {
     println!(
         "Day 2 solutions: {:?} and {:?}",
         day_2::first_solution(),
-        ""
+        day_2::second_solution()
     );
 }
